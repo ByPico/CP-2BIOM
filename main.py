@@ -4,6 +4,13 @@ from sklearn import metrics
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.multiclass import OneVsRestClassifier as ORC
 from sklearn.model_selection import train_test_split
+import math
+import warnings
+
+# Suppress warnings
+def warn(*args, **kwargs):
+    pass
+warnings.warn = warn
 
 
 class Evaluator:
@@ -56,26 +63,31 @@ class Evaluator:
         """
         Plot the distribution of genuine and impostor scores.
         """
-        plt.figure()
+        plt.figure(figsize=(10, 8))
+        
+        # Define number of bins for the histograms
+        bins = np.linspace(0, 1, 20)
         
         # Plot the histogram for genuine scores
         plt.hist(
             self.genuine_scores,
+            bins=bins,
             color='green',
             lw=2,
             histtype='step',
             hatch='\\',
-            label='Genuine Scores'
+            label='Genuine'
         )
         
         # Plot the histogram for impostor scores
         plt.hist(
             self.impostor_scores,
+            bins=bins,
             color='red',
             lw=2,
             histtype='step',
             hatch='/',
-            label='Impostor Scores'
+            label='Impostor'
         )
         
         # Set the x-axis limit to ensure the histogram fits within the correct range
@@ -92,7 +104,7 @@ class Evaluator:
         
         # Set x and y-axis labels with specified font size and weight
         plt.xlabel(
-            'Scores',
+            'Similarity Score',
             fontsize=12,
             weight='bold'
         )
@@ -182,9 +194,6 @@ class Evaluator:
         )
         
         # Add a text annotation for the EER point on the curve
-        # Plot the diagonal line representing random classification
-        # Scatter plot to highlight the EER point on the curve
-
         plt.text(EER + 0.07, EER + 0.07, "EER", style='italic', fontsize=12,
                  bbox={'facecolor': 'grey', 'alpha': 0.5, 'pad': 10})
         plt.plot([0, 1], [0, 1], '--', lw=0.5, color='black')
@@ -338,159 +347,172 @@ def extract_features(X):
     - X (numpy.ndarray): Input data containing facial landmarks.
     
     Returns:
-    - numpy.ndarray: Feature matrix containing pairwise distances between landmarks.
+    - numpy.ndarray: Feature matrix containing pairwise Euclidean distances and absolute differences.
     """
     num_samples = X.shape[0]
     num_landmarks = X.shape[1]
     
-    # Calculate number of pairwise distances
-    num_features = (num_landmarks * (num_landmarks - 1)) // 2
+    # Initialize list to store features for each sample
+    all_features = []
     
-    # Initialize feature matrix
-    features = np.zeros((num_samples, num_features))
+    # For each sample, compute features between pairs of landmarks
+    for k in range(num_samples):
+        features_k = []
+        
+        # Calculate pairwise features for landmarks
+        for i in range(num_landmarks):
+            for j in range(i+1, num_landmarks):
+                p1 = X[k, i]
+                p2 = X[k, j]
+                
+                # Euclidean distance
+                features_k.append(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2))
+                # Absolute difference in x-coordinate
+                features_k.append(abs(p1[0] - p2[0]))
+                # Absolute difference in y-coordinate
+                features_k.append(abs(p1[1] - p2[1]))
+        
+        all_features.append(features_k)
     
-    # For each sample, compute pairwise Euclidean distances between landmarks
-    for i in range(num_samples):
-        feature_idx = 0
-        for j in range(num_landmarks):
-            for k in range(j+1, num_landmarks):
-                # Compute Euclidean distance between landmarks j and k
-                dist = np.linalg.norm(X[i, j] - X[i, k])
-                features[i, feature_idx] = dist
-                feature_idx += 1
-    
-    return features
+    return np.array(all_features)
 
 
 def main():
-    
+    """
+    Main function to run system B simulation.
+    """
     # Set the random seed to 1
     np.random.seed(1)
-
-    # Name the systems A, B, and C
-    systems = ["A", "B", "C"]
-
-    for system in systems:
-        
-        # Generate genuine scores with mean between 0.5 and 0.9 and std between 0.0 and 0.2
-        genuine_mean = 0.5 + 0.4 * np.random.random()
-        genuine_std = 0.2 * np.random.random()
-        genuine_scores = np.random.normal(genuine_mean, genuine_std, 400)
-        
-        # Clip to ensure scores are between 0 and 1
-        genuine_scores = np.clip(genuine_scores, 0, 1)
-        
-        # Generate impostor scores with mean between 0.1 and 0.5 and std between 0.0 and 0.2
-        impostor_mean = 0.1 + 0.4 * np.random.random()
-        impostor_std = 0.2 * np.random.random()
-        impostor_scores = np.random.normal(impostor_mean, impostor_std, 1600)
-        
-        # Clip to ensure scores are between 0 and 1
-        impostor_scores = np.clip(impostor_scores, 0, 1)
-        
-        # Creating an instance of the Evaluator class
-        evaluator = Evaluator(
-            epsilon=1e-12,
-            num_thresholds=200,
-            genuine_scores=genuine_scores,
-            impostor_scores=impostor_scores,
-            plot_title="%s" % system
-        )
-        
-        # Generate the FPR, FNR, and TPR using 200 threshold values
-        FPR, FNR, TPR = evaluator.compute_rates()
     
-        # Plot the score distribution
-        evaluator.plot_score_distribution()
-                
-        # Plot the DET curve and include the EER in the plot's title
-        evaluator.plot_det_curve(FPR, FNR)
-        
-        # Plot the ROC curve
-        evaluator.plot_roc_curve(FPR, TPR)
-
-
-def load_data():
-    """
-    Load the Caltech dataset with 5 facial landmarks.
+    # Use system B
+    system = "B"
     
-    Returns:
-    - tuple: (X, y) - Feature data and corresponding labels.
-    """
-    # Load .npy files (placeholder - adjust filenames as needed)
-    X = np.load('caltech_features.npy')
-    y = np.load('caltech_labels.npy')
+    # Generate genuine scores with mean around 0.6 and std of 0.08
+    genuine_mean = 0.6
+    genuine_std = 0.08
+    genuine_scores = np.random.normal(genuine_mean, genuine_std, 400)
+    genuine_scores = np.clip(genuine_scores, 0, 1)
     
-    return X, y
+    # Generate impostor scores with mean around 0.25 and std of 0.15
+    impostor_mean = 0.25
+    impostor_std = 0.15
+    impostor_scores = np.random.normal(impostor_mean, impostor_std, 1600)
+    impostor_scores = np.clip(impostor_scores, 0, 1)
+    
+    # Creating an instance of the Evaluator class
+    evaluator = Evaluator(
+        epsilon=1e-12,
+        num_thresholds=200,
+        genuine_scores=genuine_scores,
+        impostor_scores=impostor_scores,
+        plot_title="%s" % system
+    )
+    
+    # Generate the FPR, FNR, and TPR using 200 threshold values
+    FPR, FNR, TPR = evaluator.compute_rates()
+
+    # Plot the score distribution
+    evaluator.plot_score_distribution()
+            
+    # Plot the DET curve and include the EER in the plot's title
+    evaluator.plot_det_curve(FPR, FNR)
+    
+    # Plot the ROC curve
+    evaluator.plot_roc_curve(FPR, TPR)
 
 
 def biometric_system():
     """
-    Main function for the biometric authentication system using k-NN and ORC.
+    Main function for the biometric authentication system using k-NN and ORC on Caltech dataset.
     """
-    # Load raw data
-    X, y = load_data()
+    # Step 1: Load the Caltech dataset with 5 facial landmarks
+    print("Loading data...")
+    try:
+        X = np.load("X-68-Caltech.npy")  # Use your dataset file name
+        y = np.load("y-68-Caltech.npy")  # Use your dataset file name
+    except FileNotFoundError:
+        print("Error: Dataset files not found. Please ensure the .npy files are in the current directory.")
+        return
     
-    # Split data into training (67%) and testing (33%) sets
+    # Step 2: Split data into training and testing sets
+    print("Splitting data into training and testing sets...")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.33, random_state=42
     )
     
-    # Extract features from training data
+    # Step 3: Extract features from training data
+    print("Extracting features from training data...")
     X_train_features = extract_features(X_train)
     
-    # Create and train a OneVsRest classifier with k-NN
+    # Step 4: Create and train a OneVsRest classifier with k-NN
+    print("Training k-NN classifier with OneVsRest strategy...")
     clf = ORC(KNeighborsClassifier(n_neighbors=5))
     clf.fit(X_train_features, y_train)
     
-    # Extract features from test data
+    # Step 5: Extract features from test data
+    print("Extracting features from test data...")
     X_test_features = extract_features(X_test)
     
-    # Predict probabilities instead of labels
+    # Step 6: Predict probabilities using the trained classifier
+    print("Computing matching scores...")
     matching_scores = clf.predict_proba(X_test_features)
     
-    # Initialize lists for genuine and impostor scores
+    # Step 7: Separate scores into genuine and impostor
+    print("Separating genuine and impostor scores...")
     genuine_scores = []
     impostor_scores = []
     
-    # Separate scores into genuine and impostor based on actual labels
     for i, test_label in enumerate(y_test):
         # Find the index of the true class for this test sample
         true_class_idx = np.where(clf.classes_ == test_label)[0][0]
         
-        # Get the probability score for the true class
+        # Get the probability score for the true class (genuine score)
         genuine_score = matching_scores[i, true_class_idx]
         genuine_scores.append(genuine_score)
         
-        # Get the maximum probability score for any other class
-        # (impostor score is the highest probability for a wrong class)
-        other_scores = np.delete(matching_scores[i], true_class_idx)
-        if len(other_scores) > 0:
-            impostor_score = np.max(other_scores)
-            impostor_scores.append(impostor_score)
+        # Get probability scores for all other classes (impostor scores)
+        for j, prob in enumerate(matching_scores[i]):
+            if j != true_class_idx:
+                impostor_scores.append(prob)
     
     # Convert to numpy arrays
     genuine_scores = np.array(genuine_scores)
     impostor_scores = np.array(impostor_scores)
     
-    # Create evaluator and generate plots
+    # Step 8: Evaluate performance using the Evaluator class
+    print("Evaluating system performance...")
     evaluator = Evaluator(
         num_thresholds=200,
         genuine_scores=genuine_scores,
         impostor_scores=impostor_scores,
-        plot_title="k-NN with ORC"
+        plot_title="Caltech Facial Biometrics"
     )
     
     # Generate rates
     FPR, FNR, TPR = evaluator.compute_rates()
     
     # Create evaluation plots
+    print("Generating performance plots...")
     evaluator.plot_score_distribution()
     evaluator.plot_det_curve(FPR, FNR)
     evaluator.plot_roc_curve(FPR, TPR)
+    
+    # Calculate and display system metrics
+    print("\nBiometric System Evaluation Results:")
+    print("d-prime = %.4f" % evaluator.get_dprime())
+    print("EER = %.4f" % evaluator.get_EER(FPR, FNR))
+    print("AUC = %.4f" % metrics.auc(FPR, TPR))
+    
+    # Calculate accuracy
+    y_pred = clf.predict(X_test_features)
+    accuracy = np.mean(y_pred == y_test)
+    print("Accuracy = %.4f" % accuracy)
 
 
 if __name__ == "__main__":
+    # Run the main function to simulate system B
     main()
-    # Uncomment the line below to run the biometric system with real data
+    
+    # If you want to run the biometric system with Caltech dataset,
+    # uncomment the following line:
     # biometric_system()
