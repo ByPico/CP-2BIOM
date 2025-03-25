@@ -461,7 +461,7 @@ def biometric_system():
         num_thresholds=200,
         genuine_scores=genuine_scores,
         impostor_scores=impostor_scores,
-        plot_title="B"  # Set to "B" to match the reference plot
+        plot_title="Caltech Facial Biometrics"
     )
     
     # Generate rates
