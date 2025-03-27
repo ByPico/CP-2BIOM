@@ -120,6 +120,9 @@ class Evaluator:
             fontsize=12,
             weight='bold'
         )
+
+        # Scale the y-axis logarithmically for better visualization of the score distribution
+        plt.yscale('log')
         
         # Remove the top and right spines for a cleaner appearance
         plt.gca().spines['top'].set_visible(False)
