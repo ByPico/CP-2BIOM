@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import math
 import warnings
 
-# Suppress warnings
+# Silence warnings
 def warn(*args, **kwargs):
     pass
 warnings.warn = warn
@@ -15,7 +15,7 @@ warnings.warn = warn
 
 class Evaluator:
     """
-    A class for evaluating a biometric system's performance.
+    A class for evaluating the system's performance.
     """
 
     def __init__(self, 
@@ -65,10 +65,10 @@ class Evaluator:
         """
         plt.figure(figsize=(10, 8))
         
-        # Define number of bins for the histograms
+        # Number of bins for the histograms
         bins = np.linspace(0, 1, 20)
         
-        # Plot the histogram for genuine scores
+        # Plotting the histogram for genuine scores
         plt.hist(
             self.genuine_scores,
             bins=bins,
@@ -82,7 +82,7 @@ class Evaluator:
             label='Genuine'
         )
         
-        # Plot the histogram for impostor scores
+        # Plotting the histogram for impostor scores
         plt.hist(
             self.impostor_scores,
             bins=bins,
@@ -96,19 +96,19 @@ class Evaluator:
             label='Impostor'
         )
         
-        # Set the x-axis limit to ensure the histogram fits within the correct range
+        # Set the x-axis limit
         plt.xlim([-0.05, 1.05])
         
-        # Add grid lines for better readability
+        # Add grid lines
         plt.grid(color='gray', linestyle='--', linewidth=0.5)
         
-        # Add legend to the upper left corner with a specified font size
+        # Add legend
         plt.legend(
             loc='upper left',
             fontsize=12
         )
         
-        # Set x and y-axis labels with specified font size and weight
+        # Set x and y-axis labels
         plt.xlabel(
             'Similarity Score',
             fontsize=12,
@@ -144,7 +144,6 @@ class Evaluator:
                   fontsize=15,
                   weight='bold')
         
-       
         # Save the figure before displaying it
         plt.savefig('score_distribution_plot_(%s).png' % self.plot_title, dpi=300, bbox_inches="tight")
         
@@ -175,7 +174,7 @@ class Evaluator:
         abs_diff = np.abs(FPR - FNR)
         min_index = np.argmin(abs_diff)
         
-        # Calculate EER as the average of FPR and FNR at this index
+        # Calculating EER // average of FPR and FNR at this index
         EER = (FPR[min_index] + FNR[min_index]) / 2.0
         
         return EER
@@ -188,13 +187,13 @@ class Evaluator:
          - FNR (list or array-like): False Negative Rate values.
         """
         
-        # Calculate the Equal Error Rate (EER) using the get_EER method
+        # Calculate EER using the get_EER method
         EER = self.get_EER(FPR, FNR)
         
-        # Create a new figure for plotting
+        # Create a new figure
         plt.figure()
         
-        # Plot the Detection Error Tradeoff Curve
+        # Plot the DET Curve
         plt.plot(
             FPR,
             FNR,
@@ -202,13 +201,13 @@ class Evaluator:
             color='blue'
         )
         
-        # Add a text annotation for the EER point on the curve
-        plt.text(EER + 0.07, EER + 0.07, "EER", style='italic', fontsize=12,
+        # Text displaying the EER value on the graph
+        plt.text(EER + 0.07, EER + 0.07, f"EER = {EER:.5f}", style='italic', fontsize=12,
                  bbox={'facecolor': 'grey', 'alpha': 0.5, 'pad': 10})
         plt.plot([0, 1], [0, 1], '--', lw=0.5, color='black')
         plt.scatter([EER], [EER], c="black", s=100)
         
-        # Set the x and y-axis limits to ensure the plot fits within the range 
+        # Set the x and y-axis limits
         plt.xlim([-0.05, 1.05])
         plt.ylim([-0.05, 1.05])
         
@@ -223,7 +222,7 @@ class Evaluator:
         plt.gca().spines['top'].set_visible(False)
         plt.gca().spines['right'].set_visible(False)
         
-        # Set x and y-axis labels with specified font size and weight
+        # Set x and y-axis labels
         plt.xlabel(
             'False Pos. Rate',
             fontsize=12,
@@ -236,7 +235,7 @@ class Evaluator:
             weight='bold'
         )
         
-        # Add a title to the plot with EER value and system title
+        # Title to the plot with EER value and system title
         plt.title(
             'Detection Error Tradeoff Curve \nEER = %.5f\nSystem %s' % (EER, self.plot_title),
             fontsize=15,
@@ -252,13 +251,13 @@ class Evaluator:
             fontsize=10
         )
         
-        # Save the plot as an image file
+        # Save the plot as an image
         plt.savefig('det_curve_plot_(%s).png' % self.plot_title, dpi=300, bbox_inches="tight")
         
-        # Display the plot
+        # Display
         plt.show()
         
-        # Close the plot to free up resources
+        # Close
         plt.close()
     
         return
@@ -271,16 +270,16 @@ class Evaluator:
         - TPR (list or array-like): True Positive Rate values.
         """
         
-        # Create a new figure for the ROC curve
+        # New figure
         plt.figure()
         
-        # Plot the ROC curve using FPR and TPR
+        # Plot the ROC curve
         plt.plot(FPR, TPR, lw=2, color='blue')
         
         # Calculate the Area Under the Curve (AUC)
         AUC = metrics.auc(FPR, TPR)
         
-        # Set x and y-axis limits to ensure the plot fits within the range
+        # Set x and y-axis limits
         plt.xlim([-0.05, 1.05])
         plt.ylim([-0.05, 1.05])
         
@@ -291,7 +290,7 @@ class Evaluator:
         plt.gca().spines['top'].set_visible(False)
         plt.gca().spines['right'].set_visible(False)
         
-        # Set x and y-axis labels with specified font size and weight
+        # Set x and y-axis labels
         plt.xlabel('False Pos. Rate', fontsize=12, weight='bold')
         plt.ylabel('True Pos. Rate', fontsize=12, weight='bold')
         
@@ -299,17 +298,17 @@ class Evaluator:
         plt.title('Receiver Operating Characteristic Curve \nAUC = %.5f\nSystem %s' % 
                  (AUC, self.plot_title), fontsize=15, weight='bold')
         
-        # Set font size for x and y-axis ticks
+        # Set font size for x and y-axis
         plt.xticks(fontsize=10)
         plt.yticks(fontsize=10)
         
-        # Save the plot as a PNG file
+        # Save the plot as Image
         plt.savefig('roc_curve_plot_(%s).png' % self.plot_title, dpi=300, bbox_inches="tight")
         
-        # Display the plot
+        # Display
         plt.show()
         
-        # Close the figure to free up resources
+        # Close the figure
         plt.close()
  
         return
@@ -323,9 +322,9 @@ class Evaluator:
                 and true positive rates for each threshold.
         """
         # Initialize lists for rates
-        FPR = []  # False Positive Rate
-        FNR = []  # False Negative Rate 
-        TPR = []  # True Positive Rate
+        FPR = []
+        FNR = []
+        TPR = []
         
         # Iterate through thresholds
         for threshold in self.thresholds:
@@ -335,7 +334,7 @@ class Evaluator:
             TN = sum(1 for score in self.impostor_scores if score < threshold)
             FN = sum(1 for score in self.genuine_scores if score < threshold)
             
-            # Compute rates (add epsilon to prevent division by zero)
+            # Compute rates and adding epsilon to prevent division by zero
             fpr = FP / (FP + TN + self.epsilon)
             fnr = FN / (FN + TP + self.epsilon)
             tpr = TP / (TP + FN + self.epsilon)
@@ -350,18 +349,12 @@ class Evaluator:
 
 def extract_features(X):
     """
-    Extract features from the facial landmark data.
-    
-    Parameters:
-    - X (numpy.ndarray): Input data containing facial landmarks.
-    
-    Returns:
-    - numpy.ndarray: Feature matrix containing pairwise Euclidean distances and absolute differences.
+    Extract features from the facial landmark data with improved accuracy.
     """
     num_samples = X.shape[0]
     num_landmarks = X.shape[1]
     
-    # Initialize list to store features for each sample
+    # Initialize feature matrix
     all_features = []
     
     # For each sample, compute features between pairs of landmarks
@@ -374,16 +367,28 @@ def extract_features(X):
                 p1 = X[k, i]
                 p2 = X[k, j]
                 
-                # Euclidean distance
+                # Euclidean distance (normalized)
                 features_k.append(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2))
                 # Absolute difference in x-coordinate
                 features_k.append(abs(p1[0] - p2[0]))
                 # Absolute difference in y-coordinate
                 features_k.append(abs(p1[1] - p2[1]))
+                # Angle between points (new feature)
+                angle = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+                features_k.append(angle)
         
         all_features.append(features_k)
     
-    return np.array(all_features)
+    # Convert to numpy array
+    features = np.array(all_features)
+    
+    # Standardize features (z-score normalized)
+    mean = np.mean(features, axis=0)
+    std = np.std(features, axis=0)
+    std[std == 0] = 1e-10  # Avoiding division by zero
+    normalized_features = (features - mean) / std
+    
+    return normalized_features
 
 
 def biometric_system():
@@ -394,14 +399,14 @@ def biometric_system():
     np.random.seed(42)
     print("Loading data...")
     try:
-        X = np.load("X-68-Caltech.npy")  # Use your dataset file name
-        y = np.load("y-68-Caltech.npy")  # Use your dataset file name
+        X = np.load("X-68-Caltech.npy")  # Loading Caltech Files
+        y = np.load("y-68-Caltech.npy")
         print(f"Loaded dataset with {X.shape[0]} samples, {X.shape[1]} landmarks")
-    except FileNotFoundError:
-        print("Error: Dataset files not found. Please ensure the .npy files are in the current directory.")
+    except FileNotFoundError: # Error Handling
+        print("Error: Dataset files not found")
         return
     
-    # Step 2: Split data into training and testing sets
+    # Step 2: Split data into training and testing
     print("Splitting data into training and testing sets...")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.33, random_state=42
@@ -413,10 +418,10 @@ def biometric_system():
     X_train_features = extract_features(X_train)
     print(f"Extracted {X_train_features.shape[1]} features per sample")
     
-    # Step 4: Create and train a OneVsRest classifier with k-NN
+    # Step 4: Create and train with k-NN
     print("Training k-NN classifier with OneVsRest strategy...")
     # Use a higher k value and distance weighting to get smoother probability outputs
-    clf = ORC(KNeighborsClassifier(n_neighbors=7, weights='distance'))
+    clf = ORC(KNeighborsClassifier(n_neighbors=9, weights='distance', metric='minkowski', p=2, algorithm='auto'))
     clf.fit(X_train_features, y_train)
     
     # Step 5: Extract features from test data
@@ -433,7 +438,7 @@ def biometric_system():
     impostor_scores = []
     
     for i, test_label in enumerate(y_test):
-        # Find the index of the true class for this test sample
+
         true_class_idx = np.where(clf.classes_ == test_label)[0][0]
         
         # Get the probability score for the true class (genuine score)
@@ -445,16 +450,8 @@ def biometric_system():
             if j != true_class_idx:
                 impostor_scores.append(prob)
     
-    # Add small random noise to both distributions to create natural overlap
     genuine_scores = np.array(genuine_scores)
     impostor_scores = np.array(impostor_scores)
-    
-    # Add small random noise to both distributions
-    genuine_noise = np.random.normal(0, 0.05, size=len(genuine_scores))
-    impostor_noise = np.random.normal(0, 0.05, size=len(impostor_scores))
-    
-    genuine_scores = np.clip(genuine_scores + genuine_noise, 0, 1)
-    impostor_scores = np.clip(impostor_scores + impostor_noise, 0, 1)
     
     print(f"Collected {len(genuine_scores)} genuine scores and {len(impostor_scores)} impostor scores")
     
@@ -491,5 +488,7 @@ def biometric_system():
 
 
 if __name__ == "__main__":
-    # Run the biometric system with Caltech dataset
+    
+    # Run
+    
     biometric_system()
